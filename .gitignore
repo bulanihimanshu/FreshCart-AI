@@ -1,0 +1,69 @@
+# ─── Instacart Raw Data (too large for git) ───────────────────────────────
+data/raw/
+data/processed/
+data/precomputed/
+
+# ─── Trained Model Weights (large binaries) ───────────────────────────────
+backend/saved_models/
+saved_models/
+*.h5
+*.pkl
+*.joblib
+
+# ─── Python ────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+*.log
+
+# ─── Virtual Environments ──────────────────────────────────────────────────
+.venv/
+venv/
+env/
+ENV/
+.env
+.env.local
+
+# ─── Jupyter Notebooks ─────────────────────────────────────────────────────
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# ─── Node / React / Frontend ───────────────────────────────────────────────
+frontend/node_modules/
+frontend/.next/
+frontend/.env.local
+frontend/dist/
+frontend/build/
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ─── OS Files ──────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ─── IDE ───────────────────────────────────────────────────────────────────
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
+
+# ─── Professor Script Outputs (generated, not source) ─────────────────────
+backend/professor_scripts/results.csv
+backend/professor_scripts/metrics_comparison.png
+
+# ─── Misc ──────────────────────────────────────────────────────────────────
+*.zip
