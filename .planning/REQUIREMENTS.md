@@ -133,6 +133,54 @@
 
 > Populated by roadmapper — maps each REQ-ID to the phase it is delivered in.
 
-| REQ-ID | Phase | Status |
-|--------|-------|--------|
-| (populated by roadmapper) | | |
+| REQ-ID | Phase | Phase Name | Status |
+|--------|-------|------------|--------|
+| DATA-01 | 1 | Data Foundation | ☐ |
+| DEL-02 | 1 | Data Foundation | ☐ |
+| DEL-03 | 1 | Data Foundation | ☐ |
+| ML-01 | 2 | EDA & Preprocessing | ☐ |
+| ML-02 | 2 | EDA & Preprocessing | ☐ |
+| DATA-02 | 2 | EDA & Preprocessing | ☐ |
+| ML-03 | 3 | Apriori Baseline | ☐ |
+| ML-04 | 4 | LSTM Core Model | ☐ |
+| ML-05 | 5 | Time-Aware LSTM | ☐ |
+| ML-06 | 6 | Cold Start System | ☐ |
+| ML-07 | 7 | Full Evaluation | ☐ |
+| API-01 | 8 | FastAPI Backend | ☐ |
+| API-02 | 8 | FastAPI Backend | ☐ |
+| API-03 | 8 | FastAPI Backend | ☐ |
+| API-04 | 8 | FastAPI Backend | ☐ |
+| API-05 | 8 | FastAPI Backend | ☐ |
+| API-06 | 8 | FastAPI Backend | ☐ |
+| API-07 | 8 | FastAPI Backend | ☐ |
+| API-08 | 8 | FastAPI Backend | ☐ |
+| API-09 | 8 | FastAPI Backend | ☐ |
+| AUTH-01 | 8 | FastAPI Backend | ☐ |
+| AUTH-02 | 8 | FastAPI Backend | ☐ |
+| PROF-01 | 8 | FastAPI Backend | ☐ |
+| PROF-02 | 8 | FastAPI Backend | ☐ |
+| AUTH-03 | 9 | React Frontend | ☐ |
+| AUTH-04 | 9 | React Frontend | ☐ |
+| AUTH-06 | 9 | React Frontend | ☐ |
+| SHOP-01 | 9 | React Frontend | ☐ |
+| SHOP-02 | 9 | React Frontend | ☐ |
+| SHOP-03 | 9 | React Frontend | ☐ |
+| SHOP-04 | 9 | React Frontend | ☐ |
+| SHOP-05 | 9 | React Frontend | ☐ |
+| CART-01 | 9 | React Frontend | ☐ |
+| CART-02 | 9 | React Frontend | ☐ |
+| CART-03 | 9 | React Frontend | ☐ |
+| CART-04 | 9 | React Frontend | ☐ |
+| SET-01 | 9 | React Frontend | ☐ |
+| SET-02 | 9 | React Frontend | ☐ |
+| SET-03 | 9 | React Frontend | ☐ |
+| SET-04 | 9 | React Frontend | ☐ |
+| SET-05 | 9 | React Frontend | ☐ |
+| SET-06 | 9 | React Frontend | ☐ |
+| REC-01 | 9 | React Frontend | ☐ |
+| REC-02 | 9 | React Frontend | ☐ |
+| REC-03 | 9 | React Frontend | ☐ |
+| REC-04 | 9 | React Frontend | ☐ |
+| REC-05 | 9 | React Frontend | ☐ |
+| REC-06 | 9 | React Frontend | ☐ |
+| DEL-01 | 10 | Integration & Delivery | ☐ |
