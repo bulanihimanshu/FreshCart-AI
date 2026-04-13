@@ -17,7 +17,7 @@
 
 - [ ] **ML-01**: `01_EDA.ipynb` — produces order distribution charts, time heatmap, and top-products analysis from the processed subset
 - [ ] **ML-02**: `02_Preprocessing.ipynb` — builds sequences, vocabulary, and user-stratified train/val/test splits; outputs `vocab.json` and `.npz` files
-- [ ] **ML-03**: `03_Apriori_Baseline.ipynb` — generates Apriori association rules, computes HR@K score, saves `baseline_results.csv`
+- [x] **ML-03**: `03_Apriori_Baseline.ipynb` — generates Apriori association rules, computes HR@K score, saves `baseline_results.csv`
 - [ ] **ML-04**: `04_LSTM_Model.ipynb` — implements a stacked 2-layer LSTM (128-dim embedding, 256-dim hidden, Dropout 0.3) from scratch in Keras; trains on Colab GPU; saves `saved_models/lstm_model.h5`
 - [ ] **ML-05**: `05_Time_Features.ipynb` — adds hour-of-day (Embedding 24→16), day-of-week (Embedding 7→8), and days-since-last-order (normalized → Dense 8) embeddings concatenated to LSTM output; retrains; saves `lstm_time_model.h5` with improved HR@K
 - [ ] **ML-06**: `06_Cold_Start.ipynb` — implements and evaluates 3-tier cold start system; generates precomputed lookup tables (`global_top20.json`, `hourly_top10.json`, `dow_top10.json`, `aisle_top10.json`)
