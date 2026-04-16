@@ -11,7 +11,7 @@
 | 2 | EDA & Preprocessing | Explore data patterns, build item sequences, vocabulary, and train/val/test splits | ML-01, ML-02, DATA-02 | 3 |
 | 3 | Apriori Baseline | Implement and evaluate the Apriori association rule baseline | ML-03 | 3 |
 | 4 | LSTM Core Model | Build stacked LSTM from scratch in Keras, train on GPU, evaluate | ML-04 | 4 |
-| 5 | Time-Aware LSTM | 2/3 | In Progress|  |
+| 5 | Time-Aware LSTM | Complete | ML-05 | 3 |
 | 6 | Cold Start System | Build 3-tier cold start logic and precompute all lookup tables | ML-06 | 3 |
 | 7 | Full Evaluation | Run complete 4-system comparison, generate results and charts | ML-07 | 3 |
 | 8 | FastAPI Backend | Build entire backend: auth, recommend, products, user endpoints, CORS | API-01–09, AUTH-01, AUTH-02, PROF-01, PROF-02 | 5 |
@@ -106,9 +106,9 @@
 **UI hint**: no
 
 **Plans:**
-2/3 plans executed
-2. `05_Time_Features.ipynb` (retraining) — update data pipeline to include temporal features per sequence, retrain model with EarlyStopping; save `saved_models/lstm_time_model.h5`
-3. `05_Time_Features.ipynb` (comparison) — compute updated HR@5/HR@10/MRR; generate comparison table (Apriori vs LSTM vs LSTM+Time); document improvement
+1. `05_Time_Features.ipynb` (architecture) — TimeAwareLSTM model with 4 inputs, time embeddings (hour 24→16, dow 7→8, days_gap dense 8), 288-dim fusion
+2. `05_Time_Features.ipynb` (training) — training loop, EarlyStopping, ModelCheckpoint, training curves; save `saved_models/lstm_time_model.h5`
+3. `05_Time_Features.ipynb` (evaluation + comparison) — batch evaluation on 1,000 test users, HR@5/HR@10/Precision@5/MRR; Pandas comparison DataFrame (Apriori vs LSTM vs LSTM+Time); `model_comparison.csv` saved for Phase 7
 
 **Success criteria:**
 1. Time embedding architecture correctly produces 288-dim vector (256 LSTM + 32 time)
