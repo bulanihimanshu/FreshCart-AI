@@ -19,7 +19,7 @@ progress:
 **Status:** Executing Phase 08
 **Current phase:** 08
 **Last updated:** 2026-04-17
-**Last session:** Completed 08-03-PLAN.md (recommend endpoint, cold_start.py tier router, users.json)
+**Last session:** Completed 08-03-PLAN.md (products.py — GET /api/products vocab-filtered search, GET /api/products/{id})
 
 ## Project Reference
 
@@ -53,3 +53,5 @@ See: .planning/PROJECT.md (updated 2026-04-11)
 - 08-03: users.json loaded into app.state at startup — avoids per-request file reads; recommend endpoint reads from app.state.users
 - 08-03: Tier 3 LSTM fallback chain: inference failure → Tier 2 → Tier 1 — ensures recommendations always returned
 - 08-03: Sequence padding: left-pad to SEQ_LEN=50 with zeros; days_gap normalized by /30.0 (consistent with D-02)
+- 08-03 (products): Vocab check uses str(product_id) — JSON keys are always strings; search breaks early at limit
+- 08-03 (products): Only vocab-present products returned from GET /api/products to prevent OOV LSTM crashes (D-01)
