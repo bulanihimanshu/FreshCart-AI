@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import ProtectedRoute from './components/ProtectedRoute';
+import Navbar from './components/Navbar';
 import LoginPage from './pages/LoginPage';
 import ShopPage from './pages/ShopPage';
 import CartPage from './pages/CartPage';
@@ -9,6 +10,7 @@ import SettingsPage from './pages/SettingsPage';
 function App() {
   return (
     <BrowserRouter>
+      <Navbar />
       <Routes>
         <Route path="/" element={<Navigate to="/shop" replace />} />
         <Route path="/login" element={<LoginPage />} />
