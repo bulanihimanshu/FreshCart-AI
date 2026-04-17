@@ -23,9 +23,9 @@ The LSTM model runs silently in the background and surfaces personalized, time-a
 - [ ] Seven Jupyter notebooks complete: EDA → Preprocessing → Apriori → LSTM → Time Features → Cold Start → Evaluation
 - [ ] Stacked LSTM (2-layer, 128-dim embed, 256-dim hidden, Dropout 0.3) trained from scratch in Keras
 - [ ] Time-aware context embeddings (hour 16-dim, DOW 8-dim, days_gap 8-dim) concatenated to LSTM output
-- [ ] Three-tier cold start system: Tier 1 (global popularity), Tier 2 (category affinity), Tier 3 (full LSTM)
+- [x] Three-tier cold start system: Tier 1 (global popularity), Tier 2 (category affinity), Tier 3 (full LSTM)
 - [ ] Trained model weights saved as `saved_models/lstm_model.h5` and `vocab.json`
-- [ ] Precomputed lookup tables: `global_top20.json`, `hourly_top10.json`, `dow_top10.json`, `aisle_top10.json`
+- [x] Precomputed lookup tables: `global_top20.json`, `hourly_top10.json`, `dow_top10.json`, `aisle_top10.json`
 
 <!-- Backend -->
 - [ ] FastAPI backend with all endpoints: `/api/auth/login`, `/api/auth/logout`, `/api/recommend`, `/api/products`, `/api/user/{id}`, `/api/health`
