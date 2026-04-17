@@ -84,9 +84,9 @@
 - [ ] **API-04**: `GET /api/products?query=&limit=` — returns products matching the query string by name, up to the specified limit
 - [ ] **API-05**: `GET /api/products/{id}` — returns a single product's `{ product_id, name, aisle, department }`
 - [ ] **API-06**: `GET /api/user/{user_id}` — returns `{ user_id, display_name, order_count, tier }` for a given user
-- [ ] **API-07**: `GET /api/health` — returns `{ status: "ok" }` for uptime checks
-- [ ] **API-08**: LSTM model weights and vocab are loaded once at FastAPI startup and reused across all requests (no per-request cold loading)
-- [ ] **API-09**: CORS is configured to allow requests from the React dev server origin
+- [x] **API-07**: `GET /api/health` — returns `{ status: "ok" }` for uptime checks
+- [x] **API-08**: LSTM model weights and vocab are loaded once at FastAPI startup and reused across all requests (no per-request cold loading)
+- [x] **API-09**: CORS is configured to allow requests from the React dev server origin
 
 ---
 

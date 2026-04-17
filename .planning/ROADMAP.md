@@ -14,7 +14,7 @@
 | 5 | Time-Aware LSTM | Complete | ML-05 | 3 |
 | 6 | Cold Start System | Build 3-tier cold start logic and precompute all lookup tables | ML-06 | 3 |
 | 7 | Full Evaluation | Run complete 4-system comparison, generate results and charts | ML-07 | 3 |
-| 8 | FastAPI Backend | Build entire backend: auth, recommend, products, user endpoints, CORS | API-01–09, AUTH-01, AUTH-02, PROF-01, PROF-02 | 5 |
+| 8 | FastAPI Backend | 1/5 | In Progress|  |
 | 9 | React Frontend | Build all 4 pages: Login, Shop, Cart, Settings with full state management | AUTH-03, AUTH-04, AUTH-06, SHOP-01–05, CART-01–04, SET-01–06, REC-01–06 | 6 |
 | 10 | Integration & Delivery | Connect frontend to live backend, test all 5 demo users, finalize repo | DEL-01 | 3 |
 
@@ -164,7 +164,7 @@
 **UI hint**: no
 
 **Plans:**
-1. `backend/main.py` + structure — FastAPI app with CORS, router registration, startup event that loads `lstm_time_model.h5`, `vocab.json`, and all precomputed JSON tables once at boot
+1/5 plans executed
 2. Auth endpoints — `api/auth.py`: `POST /api/auth/login` validates `users.json`, returns user info + tier; `POST /api/auth/logout` returns success
 3. Recommend endpoint — `api/recommend.py`: `POST /api/recommend` accepts cart_items + time context, calls `cold_start.py` tier router → returns top-5 recommendations + `tier_used`
 4. Product + user endpoints — `api/products.py`: `GET /api/products?query=` substring search, `GET /api/products/{id}`; `api/user.py`: `GET /api/user/{user_id}`; `GET /api/health`

@@ -2,31 +2,31 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_phase: 8
-status: planning
-last_updated: "2026-04-17T07:11:52.739Z"
+current_phase: 08
+status: executing
+last_updated: "2026-04-17T17:26:45.391Z"
 progress:
   total_phases: 10
   completed_phases: 7
-  total_plans: 22
-  completed_plans: 22
+  total_plans: 27
+  completed_plans: 23
 ---
 
 # STATE — FreshCart AI
 
 ## Current State
 
-**Status:** Ready to plan
-**Current phase:** 8
-**Last updated:** 2026-04-16
-**Last session:** Completed 05-03-PLAN.md (evaluation loop, Pandas comparison table, model_comparison.csv)
+**Status:** Executing Phase 08
+**Current phase:** 08
+**Last updated:** 2026-04-17
+**Last session:** Completed 08-01-PLAN.md (FastAPI app core, lifespan model loading, health endpoint)
 
 ## Project Reference
 
 See: .planning/PROJECT.md (updated 2026-04-11)
 
 **Core value:** LSTM recommendations surfaced naturally in grocery UX, demoed without any technical explanation
-**Current focus:** Phase 7 — full-evaluation
+**Current focus:** Phase 08 — fastapi-backend
 
 ## Phase History
 
@@ -47,3 +47,6 @@ See: .planning/PROJECT.md (updated 2026-04-11)
 - 05-03: Batch predict over 1,000 test users at once (not per-user loop) for GPU efficiency
 - 05-03: LSTM+Time > LSTM assertion guarded — only fires when lstm_results.csv exists (non-zero Phase 4 values)
 - 05-03: model_comparison.csv saved with raw floats for Phase 7 downstream parsing
+- 08-01: lstm_time_model saved as .keras (not .h5) — MODEL_PATH uses .keras extension
+- 08-01: Products lookup merges aisles + departments CSV at startup for D-05 hydration (product_id -> name/aisle/department)
+- 08-01: CORSMiddleware uses explicit origins (localhost:5173, localhost:3000) not wildcard
