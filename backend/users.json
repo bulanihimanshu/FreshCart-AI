@@ -1,0 +1,42 @@
+[
+  {
+    "user_id": 1,
+    "username": "raj_sharma",
+    "password": "demo1234",
+    "display_name": "Raj Sharma",
+    "order_count": 18,
+    "tier": 3
+  },
+  {
+    "user_id": 2,
+    "username": "priya_mehta",
+    "password": "demo1234",
+    "display_name": "Priya Mehta",
+    "order_count": 11,
+    "tier": 3
+  },
+  {
+    "user_id": 3,
+    "username": "arjun_nair",
+    "password": "demo1234",
+    "display_name": "Arjun Nair",
+    "order_count": 6,
+    "tier": 3
+  },
+  {
+    "user_id": 4,
+    "username": "neha_gupta",
+    "password": "demo1234",
+    "display_name": "Neha Gupta",
+    "order_count": 2,
+    "tier": 2
+  },
+  {
+    "user_id": 5,
+    "username": "new_user_01",
+    "password": "demo1234",
+    "display_name": "New User",
+    "order_count": 0,
+    "tier": 1
+  }
+]
