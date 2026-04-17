@@ -67,3 +67,7 @@ backend/professor_scripts/metrics_comparison.png
 
 # ─── Misc ──────────────────────────────────────────────────────────────────
 *.zip
+
+# ─── AI / Planning Folders ─────────────────────────────────────────────────
+.claude/
+.planning/
