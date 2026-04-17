@@ -4,12 +4,12 @@ milestone: v1.0
 milestone_name: milestone
 current_phase: 08
 status: executing
-last_updated: "2026-04-17T17:36:09.244Z"
+last_updated: "2026-04-17T17:44:27.045Z"
 progress:
   total_phases: 10
   completed_phases: 0
   total_plans: 0
-  completed_plans: 2
+  completed_plans: 4
 ---
 
 # STATE — FreshCart AI
@@ -19,7 +19,7 @@ progress:
 **Status:** Executing Phase 08
 **Current phase:** 08
 **Last updated:** 2026-04-17
-**Last session:** Completed 08-03-PLAN.md (products.py — GET /api/products vocab-filtered search, GET /api/products/{id})
+**Last session:** Completed 08-04-PLAN.md (recommend endpoint + cold start routing — 3-tier router, LSTM inference, padding guarantee)
 
 ## Project Reference
 
@@ -55,3 +55,5 @@ See: .planning/PROJECT.md (updated 2026-04-11)
 - 08-03: Sequence padding: left-pad to SEQ_LEN=50 with zeros; days_gap normalized by /30.0 (consistent with D-02)
 - 08-03 (products): Vocab check uses str(product_id) — JSON keys are always strings; search breaks early at limit
 - 08-03 (products): Only vocab-present products returned from GET /api/products to prevent OOV LSTM crashes (D-01)
+- 08-04: Final D-07 padding guarantee added in get_recommendations outer entry-point — fills to top_k using global_top20 when tier returns fewer items
+- 08-04: Tier 3 LSTM uses named input dict (seq_input, hour_input, dow_input, days_gap_input) with numpy arrays; days_gap normalized by /30.0
