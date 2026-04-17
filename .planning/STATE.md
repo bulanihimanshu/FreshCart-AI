@@ -4,7 +4,7 @@ milestone: v1.0
 milestone_name: milestone
 current_phase: 08
 status: executing
-last_updated: "2026-04-17T17:30:06.311Z"
+last_updated: "2026-04-17T17:36:09.244Z"
 progress:
   total_phases: 10
   completed_phases: 0
@@ -19,7 +19,7 @@ progress:
 **Status:** Executing Phase 08
 **Current phase:** 08
 **Last updated:** 2026-04-17
-**Last session:** Completed 08-02-PLAN.md (auth endpoints, users.json with 5 demo users)
+**Last session:** Completed 08-03-PLAN.md (recommend endpoint, cold_start.py tier router, users.json)
 
 ## Project Reference
 
@@ -50,5 +50,6 @@ See: .planning/PROJECT.md (updated 2026-04-11)
 - 08-01: lstm_time_model saved as .keras (not .h5) — MODEL_PATH uses .keras extension
 - 08-01: Products lookup merges aisles + departments CSV at startup for D-05 hydration (product_id -> name/aisle/department)
 - 08-01: CORSMiddleware uses explicit origins (localhost:5173, localhost:3000) not wildcard
-- 08-02: Auth is stateless — server returns user record on login, frontend owns session via localStorage (no JWT, no server-side sessions)
-- 08-02: users.json lives in backend/ (not data/) so it ships without running data pipeline
+- 08-03: users.json loaded into app.state at startup — avoids per-request file reads; recommend endpoint reads from app.state.users
+- 08-03: Tier 3 LSTM fallback chain: inference failure → Tier 2 → Tier 1 — ensures recommendations always returned
+- 08-03: Sequence padding: left-pad to SEQ_LEN=50 with zeros; days_gap normalized by /30.0 (consistent with D-02)

@@ -17,7 +17,7 @@ import tensorflow as tf
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from backend.api import auth, health
+from backend.api import auth, health, recommend
 
 # ---------------------------------------------------------------------------
 # Paths — resolve relative to the project root (one level above this file)
@@ -30,6 +30,7 @@ PRECOMPUTED_DIR = ROOT / "data" / "precomputed"
 PRODUCTS_CSV = ROOT / "data" / "processed" / "products.csv"
 AISLES_CSV = ROOT / "data" / "processed" / "aisles.csv"
 DEPARTMENTS_CSV = ROOT / "data" / "processed" / "departments.csv"
+USERS_PATH = Path(__file__).resolve().parent / "users.json"
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
@@ -89,6 +90,16 @@ async def lifespan(app: FastAPI):  # noqa: D401
     }
     logger.info("Products lookup built — %d products.", len(app.state.products_df))
 
+    # 5. Users (demo users for auth + tier resolution)
+    logger.info("Loading users from %s …", USERS_PATH)
+    if USERS_PATH.exists():
+        with USERS_PATH.open() as fh:
+            app.state.users = json.load(fh)
+        logger.info("Users loaded — %d demo users.", len(app.state.users))
+    else:
+        app.state.users = []
+        logger.warning("users.json not found at %s — auth will fail.", USERS_PATH)
+
     yield  # application runs here
 
     # Teardown (nothing to clean up for these artefacts)
@@ -124,3 +135,4 @@ app.add_middleware(
 # ---------------------------------------------------------------------------
 app.include_router(health.router)
 app.include_router(auth.router)
+app.include_router(recommend.router)

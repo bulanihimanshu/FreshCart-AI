@@ -80,7 +80,7 @@
 
 - [ ] **API-01**: `POST /api/auth/login` — accepts `{ username, password }`, validates against `users.json`, returns `{ user_id, display_name, order_count, tier }` or 401 on failure
 - [ ] **API-02**: `POST /api/auth/logout` — accepts `{ user_id }`, clears server-side session if any, returns `{ success: true }`
-- [ ] **API-03**: `POST /api/recommend` — accepts `{ user_id, cart_items[], hour, dow, days_gap }`, routes through 3-tier cold start logic, returns `{ recommendations: [{product_id, name, score}], tier_used }`
+- [x] **API-03**: `POST /api/recommend` — accepts `{ user_id, cart_items[], hour, dow, days_gap }`, routes through 3-tier cold start logic, returns `{ recommendations: [{product_id, name, score}], tier_used }`
 - [ ] **API-04**: `GET /api/products?query=&limit=` — returns products matching the query string by name, up to the specified limit
 - [ ] **API-05**: `GET /api/products/{id}` — returns a single product's `{ product_id, name, aisle, department }`
 - [ ] **API-06**: `GET /api/user/{user_id}` — returns `{ user_id, display_name, order_count, tier }` for a given user
