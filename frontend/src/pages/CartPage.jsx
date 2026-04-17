@@ -1,6 +1,7 @@
 import React from 'react';
 import { useCart } from '../context/CartContext';
 import CartSummary from '../components/CartSummary';
+import ForgottenItems from '../components/ForgottenItems';
 import { Link } from 'react-router-dom';
 import { ShoppingBag, Minus, Plus, Trash2 } from 'lucide-react';
 
@@ -65,8 +66,10 @@ const CartPage = () => {
               </div>
             )}
 
-            {/* Forgotten Items placeholder for Wave 4 */}
-            <div id="forgotten-items-container" className="mt-8"></div>
+            {/* Forgotten Items */}
+            <div className="mt-8">
+              <ForgottenItems />
+            </div>
           </div>
 
           {/* Right Sidebar */}

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import SearchBar from '../components/SearchBar';
 import CategoryFilter from '../components/CategoryFilter';
 import ProductCard from '../components/ProductCard';
+import SuggestionPanel from '../components/SuggestionPanel';
 import api from '../api/client';
 
 const ShopPage = () => {
@@ -62,11 +63,9 @@ const ShopPage = () => {
             )}
           </div>
 
-          {/* Right Sidebar Placeholder (Suggestion Panel) */}
+          {/* Right Sidebar Suggestion Panel */}
           <div className="w-72 flex-shrink-0 hidden xl:block">
-            <div className="bg-emerald-50 rounded-xl p-4 border border-emerald-100 h-full min-h-[400px] flex items-center justify-center text-emerald-600 text-sm font-medium">
-              Recommendations will appear here
-            </div>
+            <SuggestionPanel />
           </div>
         </div>
       </div>
