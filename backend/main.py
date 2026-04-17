@@ -17,7 +17,7 @@ import tensorflow as tf
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from backend.api import health
+from backend.api import auth, health
 
 # ---------------------------------------------------------------------------
 # Paths — resolve relative to the project root (one level above this file)
@@ -123,3 +123,4 @@ app.add_middleware(
 # Routers
 # ---------------------------------------------------------------------------
 app.include_router(health.router)
+app.include_router(auth.router)
