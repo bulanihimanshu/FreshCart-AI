@@ -2,133 +2,96 @@
 phase: 08-fastapi-backend
 plan: "03"
 subsystem: api
-tags: [fastapi, lstm, cold-start, recommendations, python]
+tags: [fastapi, products, search, vocab-filter, python]
 
 requires:
   - phase: 08-01
-    provides: FastAPI app core, app.state with LSTM model and precomputed tables
-  - phase: 06-cold-start-system
-    provides: precomputed lookup tables (global_top20, hourly_top10, dow_top10, aisle_top10)
-  - phase: 05-time-aware-lstm
-    provides: lstm_time_model.keras, vocab.json
+    provides: FastAPI app core, app.state with vocab, products_df preloaded at startup
 
 provides:
-  - POST /api/recommend endpoint
-  - backend/core/cold_start.py — 3-tier cold start router
-  - backend/users.json — 5 demo users with tier assignments
-  - app.state.users loaded at startup for O(1) user tier lookup
+  - GET /api/products?query=&limit= endpoint (vocab-filtered search)
+  - GET /api/products/{id} endpoint (single product detail)
 
-affects: [08-02-auth, 08-04-products, 08-05-professor-scripts, 09-react-frontend]
+affects: [08-02-auth, 08-04-recommend, 08-05-professor-scripts, 09-react-frontend]
 
 tech-stack:
   added: []
   patterns:
-    - Cold start tier routing: get_user_tier(order_count) -> 1/2/3
-    - Tier 1: hourly_top10 -> dow_top10 -> global_top20 cascade
-    - Tier 2: aisle-affinity from cart items, falls back to Tier 1
-    - Tier 3: LSTM+Time predict() with graceful fallback chain to Tier 2 -> Tier 1
-    - Users loaded into app.state at lifespan startup (not per-request file read)
+    - Vocab-gated product search: only products in app.state.vocab are returned
+    - Case-insensitive substring match on product name
+    - Single-product lookup with 404 on miss
 
 key-files:
   created:
-    - backend/core/cold_start.py
-    - backend/api/recommend.py
-    - backend/users.json
+    - backend/api/products.py
   modified:
     - backend/main.py
 
 key-decisions:
-  - "Users loaded into app.state at startup (not per-request file reads) for performance"
-  - "Tier 3 LSTM inference has graceful fallback to Tier 2, then Tier 1 on any error"
-  - "Sequence padding strategy: left-pad to SEQ_LEN=50 with zeros, truncate oldest items"
-  - "days_gap normalized by /30.0 consistent with Phase 5 training preprocessing (D-02)"
+  - "Product search filters to vocab-present items only (D-01) to prevent OOV LSTM crashes"
+  - "Vocab keys are string product_ids — checked via str(product_id) in vocab"
+  - "Limit capped at 100 max via Query validation; default 10"
 
-requirements-completed: [API-03]
+requirements-completed: [API-04, API-05]
 
-duration: 2min
+duration: 3min
 completed: 2026-04-17
 ---
 
-# Phase 8 Plan 03: Recommend Endpoint Summary
+# Phase 8 Plan 03: Product Search and Details Summary
 
-**POST /api/recommend with 3-tier cold start router: Tier 1 (global popularity), Tier 2 (aisle-affinity), Tier 3 (LSTM+Time inference) with graceful fallback chain**
+**GET /api/products with vocab-filtered substring search and GET /api/products/{id} single-product detail, preventing OOV items from reaching the LSTM**
 
 ## Performance
 
-- **Duration:** 2 min
-- **Started:** 2026-04-17T17:32:34Z
-- **Completed:** 2026-04-17T17:37:09Z
-- **Tasks:** 4
-- **Files modified:** 4 (3 created, 1 modified)
+- **Duration:** 3 min
+- **Completed:** 2026-04-17
+- **Tasks:** 1
+- **Files modified:** 2 (1 created, 1 modified)
 
 ## Accomplishments
 
-- `backend/core/cold_start.py` — full 3-tier cold start router with `get_user_tier()`, `_tier1_recommendations()`, `_tier2_recommendations()`, `_tier3_recommendations()`, and `get_recommendations()` public entry-point
-- `backend/api/recommend.py` — `POST /api/recommend` endpoint with Pydantic request/response schemas, user tier resolution from `app.state.users`, returns `{recommendations, tier_used}`
-- `backend/users.json` — 5 pre-seeded demo users: raj_sharma (T3), priya_mehta (T3), arjun_nair (T3), neha_gupta (T2), new_user_01 (T1)
-- `backend/main.py` updated — recommend router registered, users.json loaded into `app.state.users` during lifespan startup
+- `backend/api/products.py` — `GET /api/products?query=&limit=` endpoint with case-insensitive product name search, filtered to only items in the model vocabulary (D-01); `GET /api/products/{id}` returns single product detail or HTTP 404
+- `backend/main.py` updated — imports `products` module and registers `products.router` before the recommend router
 
 ## Task Commits
 
-1. **Task 1: cold_start.py 3-tier router** - `0d32328` (feat)
-2. **Task 2: users.json 5 demo users** - `56f4055` (feat)
-3. **Task 3: POST /api/recommend endpoint** - `5fd07ff` (feat)
-4. **Task 4: Register router + lifespan users loading** - `f32e04b` (feat)
+1. **Task 1: Product endpoints** - `87fce8c` (feat)
 
 ## Files Created/Modified
 
-- `backend/core/cold_start.py` — Tier 1/2/3 recommendation functions; `get_recommendations()` routes by order_count; Tier 3 uses LSTM model predict() with left-padded sequence; graceful fallback chain throughout
-- `backend/api/recommend.py` — FastAPI endpoint with `RecommendRequest` / `RecommendResponse` Pydantic models; resolves order_count from `app.state.users`; delegates all recommendation logic to cold_start module
-- `backend/users.json` — 5 demo users with user_id, username, password, display_name, order_count, tier fields
-- `backend/main.py` — added `recommend` router import and `app.include_router(recommend.router)`; added USERS_PATH constant; added users.json loading step 5 in lifespan
+- `backend/api/products.py` — `APIRouter` with two endpoints; `ProductItem` Pydantic response schema with `product_id, name, aisle, department, aisle_id, department_id`; vocab filter iterates `app.state.products_df` checking `str(product_id) in app.state.vocab`
+- `backend/main.py` — added `products` to import and `app.include_router(products.router)` in Routers section
 
 ## Decisions Made
 
-- `app.state.users` preloaded at startup: avoids repeated file I/O for a 5-user demo app; consistent with the established lifespan loading pattern from 08-01
-- Tier 3 LSTM sequence input: left-pad to SEQ_LEN=50 (matches training preprocessing), truncate oldest items if cart > 50, use index 0 for unknown products/padding
-- `days_gap` normalized by `/30.0` in Tier 3 — consistent with Phase 5 decision D-02 recorded in STATE.md
-- Graceful fallback chain: Tier 3 fails → Tier 2, Tier 2 empty → Tier 1 — ensures users always receive recommendations even when ML artifacts are missing
+- Vocab check uses `str(product_id)` because `app.state.vocab` keys are strings (loaded from JSON where keys are always strings)
+- Search loop breaks early once `limit` results collected — no need to scan entire catalog after target count reached
+- `limit` defaults to 10, capped at 100 via `Query(ge=1, le=100)` to prevent unbounded responses
 
 ## Deviations from Plan
 
-### Auto-fixed Issues
-
-**1. [Rule 2 - Missing critical functionality] Loaded users.json into app.state at startup**
-- **Found during:** Task 3 (creating recommend.py)
-- **Issue:** Original design would read users.json from disk on every POST /api/recommend request — unnecessary I/O for a 5-user file that never changes at runtime
-- **Fix:** Added USERS_PATH constant and step 5 to the lifespan context manager in main.py to preload users into app.state.users; recommend.py reads from app.state instead of disk
-- **Files modified:** `backend/main.py`, `backend/api/recommend.py`
-- **Commit:** `f32e04b` (Task 4 commit)
-
----
-
-**Total deviations:** 1 auto-fixed (1 missing optimization — Rule 2)
-**Impact on plan:** Minor enhancement — no behavior change, just avoids repeated file reads at runtime.
+None — plan executed exactly as written.
 
 ## Issues Encountered
 
-None — all tasks completed cleanly.
+None — all acceptance criteria satisfied in a single clean task.
 
 ## Known Stubs
 
-None — cold_start.py uses real logic (no hardcoded empty returns). When LSTM model is not loaded (missing .keras file) or inference fails, the system gracefully degrades to Tier 2 → Tier 1, which are real precomputed-table lookups. The precomputed tables (global_top20.json, etc.) will be populated by the Phase 6 notebook; until then, the endpoint returns empty recommendations rather than crashing.
+None — endpoint reads from `app.state.products_df` and `app.state.vocab` which are populated at startup by the lifespan context manager in main.py (08-01). When those are empty (pre-startup), the endpoint returns an empty list rather than crashing.
 
 ## Next Phase Readiness
 
-- Plan 08-04 (products + user endpoints) can be added as new routers following the same pattern
-- Plan 08-02 (auth endpoints) can use `app.state.users` (already populated) for credential validation — no additional loading needed
-- Frontend can now POST to `/api/recommend` with `{user_id, cart_items, hour, dow, days_gap}` and receive `{recommendations, tier_used}`
+- Frontend can call `GET /api/products?query=milk` to search for products and get back vocab-safe results for adding to cart
+- `GET /api/products/{id}` enables product detail pages
+- Recommend endpoint (08-04) can rely on these endpoints to validate cart items before calling LSTM
 
 ## Self-Check: PASSED
 
-- backend/core/cold_start.py: FOUND
-- backend/api/recommend.py: FOUND
-- backend/users.json: FOUND
-- 08-03-SUMMARY.md: FOUND
-- commit 0d32328: FOUND
-- commit 56f4055: FOUND
-- commit 5fd07ff: FOUND
-- commit f32e04b: FOUND
+- backend/api/products.py: FOUND
+- backend/main.py updated with products router: FOUND
+- commit 87fce8c: FOUND
 
 ---
 *Phase: 08-fastapi-backend*
