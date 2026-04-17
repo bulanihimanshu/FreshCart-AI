@@ -305,4 +305,29 @@ def get_recommendations(
     else:
         recs = _tier3_recommendations(app_state, cart_items, hour, dow, days_gap, top_k)
 
+    # Final padding guarantee (D-07): if any tier returned fewer than top_k results,
+    # pad with items from global_top20 that are not already in cart or recs.
+    if len(recs) < top_k:
+        cart_set = set(cart_items)
+        existing_ids = {r["product_id"] for r in recs}
+        products_lookup: dict[int, dict] = app_state.products_df
+        for pid in app_state.global_top20:
+            if len(recs) >= top_k:
+                break
+            if pid not in cart_set and pid not in existing_ids:
+                product_info = products_lookup.get(pid, {})
+                recs.append(
+                    {
+                        "product_id": pid,
+                        "name": product_info.get("name", f"Product {pid}"),
+                        "score": None,
+                    }
+                )
+                existing_ids.add(pid)
+        logger.debug(
+            "Padded recommendations from %d to %d using global_top20.",
+            len(recs) - (top_k - len(recs)),
+            len(recs),
+        )
+
     return recs, tier
