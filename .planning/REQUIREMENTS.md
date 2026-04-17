@@ -27,8 +27,8 @@
 
 ### AUTH — Authentication & Session
 
-- [ ] **AUTH-01**: User can log in with username + password on the Login page; frontend POSTs to `POST /api/auth/login`
-- [ ] **AUTH-02**: Backend validates credentials against `users.json` and returns `{ user_id, display_name, order_count, tier }` on success
+- [x] **AUTH-01**: User can log in with username + password on the Login page; frontend POSTs to `POST /api/auth/login`
+- [x] **AUTH-02**: Backend validates credentials against `users.json` and returns `{ user_id, display_name, order_count, tier }` on success
 - [ ] **AUTH-03**: Frontend stores `user_id`, `display_name`, `order_count`, and `tier` in React state (+ localStorage for persistence across page refreshes)
 - [ ] **AUTH-04**: User can log out from the Settings page; session state is cleared and user is redirected to the Login page
 - [ ] **AUTH-06**: User sees an error message on the Login page when username or password is incorrect
