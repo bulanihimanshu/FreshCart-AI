@@ -1,0 +1,272 @@
+import os
+import json
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import tensorflow as tf
+from tensorflow import keras
+
+# Disable GPU globally for inference to bypass CuDNN constraints
+try:
+    tf.config.set_visible_devices([], 'GPU')
+    print('GPU disabled for inference, running on CPU.')
+except:
+    pass
+
+DATA_DIR = 'data/processed'
+MODELS_DIR = 'saved_models'
+PRECOMP_DIR = 'data/precomputed'
+
+def main():
+    print(f"TensorFlow version: {tf.__version__}")
+
+    # 1. Data
+    print("Loading test data...")
+    test_data = np.load(f'{DATA_DIR}/X_test.npz')
+    X_test = test_data['sequences']
+
+    with open(f'{DATA_DIR}/vocab.json', 'r') as f:
+        vocab = json.load(f)
+
+    # 2. Models
+    print("Loading models...")
+    lstm_model = keras.models.load_model(f'{MODELS_DIR}/lstm_model.h5')
+    lstm_time_model = keras.models.load_model(f'{MODELS_DIR}/lstm_time_model.keras')
+
+    # 3. Precomputed tables
+    print("Loading precomputed tables...")
+    with open(f'{PRECOMP_DIR}/global_top20.json', 'r') as f:
+        global_top20 = json.load(f)
+    with open(f'{PRECOMP_DIR}/hourly_top10.json', 'r') as f:
+        hourly_top10 = json.load(f)
+    with open(f'{PRECOMP_DIR}/dow_top10.json', 'r') as f:
+        dow_top10 = json.load(f)
+    with open(f'{PRECOMP_DIR}/aisle_top10.json', 'r') as f:
+        aisle_top10 = json.load(f)
+
+    # 4. Baseline results
+    try:
+        baseline_df = pd.read_csv(f'{DATA_DIR}/baseline_results.csv')
+        baseline_dict = dict(zip(baseline_df['metric'], baseline_df['value']))
+    except FileNotFoundError:
+        baseline_dict = None
+
+    print("Data, Models, and Tables loaded successfully.")
+    print(f"X_test shape: {X_test.shape}")
+
+    def create_simulated_test_set(X_test_arr, random_seed=42):
+        np.random.seed(random_seed)
+        X_sim = X_test_arr.copy()
+        n_users = len(X_sim)
+        
+        indices = np.arange(n_users)
+        np.random.shuffle(indices)
+        
+        t1_end = int(0.2 * n_users)
+        t2_end = t1_end + int(0.3 * n_users)
+        
+        tier1_idx = indices[:t1_end]
+        tier2_idx = indices[t1_end:t2_end]
+        
+        # Tier 1: length = 0
+        X_sim[tier1_idx, :-1] = 0
+        
+        # Tier 2: length = 1 or 2
+        for idx in tier2_idx:
+            keep_len = np.random.choice([1, 2])
+            context = X_sim[idx, :-1]
+            non_zero = context[context != 0]
+            if len(non_zero) > keep_len:
+                new_context = np.zeros_like(context)
+                new_context[-keep_len:] = non_zero[-keep_len:]
+                X_sim[idx, :-1] = new_context
+                
+        return X_sim
+
+    X_test_simulated = create_simulated_test_set(X_test)
+
+    def get_user_tier(order_count):
+        if order_count == 0:
+            return 1
+        elif order_count in [1, 2]:
+            return 2
+        else:
+            return 3
+
+    def get_recommendations(user_sequence, time_features):
+        non_zero = user_sequence[user_sequence != 0]
+        order_count = len(non_zero)
+        tier = get_user_tier(order_count)
+        
+        rec_list = []
+        if tier == 1:
+            rec_list = global_top20[:10]
+        elif tier == 2:
+            hour, dow, _ = time_features
+            hour_str = str(hour)
+            dow_str = str(dow)
+            
+            from_hour = hourly_top10.get(hour_str, [])
+            from_dow = dow_top10.get(dow_str, [])
+            
+            combined = []
+            seen = set()
+            for a, b in zip(from_hour + [None]*10, from_dow + [None]*10):
+                if a is not None and a not in seen:
+                    combined.append(a)
+                    seen.add(a)
+                if b is not None and b not in seen:
+                    combined.append(b)
+                    seen.add(b)
+            rec_list = combined[:10]
+            if len(rec_list) < 10:
+                for item in global_top20:
+                    if item not in seen:
+                        rec_list.append(item)
+                        seen.add(item)
+                    if len(rec_list) == 10:
+                        break
+        elif tier == 3:
+            seq_in = user_sequence.reshape(1, -1).astype(np.int32)
+            hour, dow, days_gap = time_features
+            h_in = np.array([hour], dtype=np.int32)
+            d_in = np.array([dow], dtype=np.int32)
+            g_in = np.array([days_gap], dtype=np.float32).reshape(1, 1)
+            
+            with tf.device('/CPU:0'):
+                preds = lstm_time_model.predict({'seq_input': seq_in, 'hour_input': h_in, 'dow_input': d_in, 'days_gap_input': g_in}, verbose=0)
+            top10_idx = np.argsort(preds[0])[-10:][::-1]
+            rec_list = [int(x) for x in top10_idx]
+            
+        return rec_list
+
+    def hit_rate(y_true, y_pred, k):
+        hits = sum([1 for act, pred in zip(y_true, y_pred) if act in pred[:k]])
+        return hits / len(y_true)
+
+    def precision_at_k(y_true, y_pred, k):
+        hits = sum([1 for act, pred in zip(y_true, y_pred) if act in pred[:k]])
+        return hits / (len(y_true) * k)
+
+    def mrr(y_true, y_pred):
+        score = 0.0
+        for act, pred in zip(y_true, y_pred):
+            try:
+                rank = pred.index(act) + 1
+                score += 1.0 / rank
+            except ValueError:
+                pass
+        return score / len(y_true)
+
+    def evaluate_coverage(predictions, subset_size=5000):
+        unique_items = set()
+        for pred in predictions:
+            unique_items.update(pred)
+        return (len(unique_items) / subset_size) * 100
+
+    y_true = test_data['sequences'][:, -1]
+
+    # Baseline
+    apriori_metrics = {}
+    if baseline_dict is not None:
+        apriori_metrics = {
+            'System': 'Apriori',
+            'HR@5': baseline_dict.get('HR@5', 0.0),
+            'HR@10': baseline_dict.get('HR@10', 0.0),
+            'Precision@5': baseline_dict.get('Precision@5', 0.0),
+            'MRR': baseline_dict.get('MRR', 0.0),
+            'Coverage (%)': 20.0 / 5000.0 * 100
+        }
+
+    # Standard LSTM
+    print("Evaluating Standard LSTM...")
+    with tf.device('/CPU:0'):
+        preds_lstm = lstm_model.predict(X_test[:, :-1], batch_size=128, verbose=1)
+    preds_lstm_top10 = np.argsort(preds_lstm, axis=1)[:, -10:][:, ::-1].tolist()
+    metrics_lstm = {
+        'System': 'LSTM',
+        'HR@5': hit_rate(y_true, preds_lstm_top10, 5),
+        'HR@10': hit_rate(y_true, preds_lstm_top10, 10),
+        'Precision@5': precision_at_k(y_true, preds_lstm_top10, 5),
+        'MRR': mrr(y_true, preds_lstm_top10),
+        'Coverage (%)': evaluate_coverage(preds_lstm_top10)
+    }
+
+    # Time-Aware LSTM
+    print("Evaluating Time-Aware LSTM...")
+    np.random.seed(42)
+    hour_test = np.random.randint(0, 24, size=(len(X_test),)).astype(np.int32)
+    dow_test = np.random.randint(0, 7, size=(len(X_test),)).astype(np.int32)
+    days_test = np.random.uniform(1, 30, size=(len(X_test),)).astype(np.float32) / 30.0
+
+    with tf.device('/CPU:0'):
+        preds_time = lstm_time_model.predict(
+            {'seq_input': X_test[:, :-1], 'hour_input': hour_test, 'dow_input': dow_test, 'days_gap_input': days_test.reshape(-1, 1)},
+            batch_size=128, verbose=1
+        )
+    preds_time_top10 = np.argsort(preds_time, axis=1)[:, -10:][:, ::-1].tolist()
+    metrics_time = {
+        'System': 'LSTM+Time',
+        'HR@5': hit_rate(y_true, preds_time_top10, 5),
+        'HR@10': hit_rate(y_true, preds_time_top10, 10),
+        'Precision@5': precision_at_k(y_true, preds_time_top10, 5),
+        'MRR': mrr(y_true, preds_time_top10),
+        'Coverage (%)': evaluate_coverage(preds_time_top10)
+    }
+
+    # Full System
+    print("Evaluating Full System (3-Tier)...")
+    preds_full = []
+    for i in range(len(X_test_simulated)):
+        time_features = (hour_test[i], dow_test[i], days_test[i])
+        recs = get_recommendations(X_test_simulated[i, :-1], time_features)
+        preds_full.append(recs)
+        
+    metrics_full = {
+        'System': 'Full System (3-Tier)',
+        'HR@5': hit_rate(y_true, preds_full, 5),
+        'HR@10': hit_rate(y_true, preds_full, 10),
+        'Precision@5': precision_at_k(y_true, preds_full, 5),
+        'MRR': mrr(y_true, preds_full),
+        'Coverage (%)': evaluate_coverage(preds_full)
+    }
+
+    all_metrics = [apriori_metrics, metrics_lstm, metrics_time, metrics_full]
+    df_results = pd.DataFrame([m for m in all_metrics if m])
+    df_results = df_results.round(4)
+
+    print("\n" + "="*60)
+    print("FINAL EVALUATION RESULTS")
+    print("="*60)
+    print(df_results.to_string(index=False))
+    print("="*60 + "\n")
+
+    df_results.to_csv('results.csv', index=False)
+    print("Saved results.csv to disk.")
+
+    try:
+        import seaborn as sns
+        df_plot = df_results.drop(columns=['Coverage (%)'])
+        df_melted = df_plot.melt(id_vars='System', var_name='Metric', value_name='Score')
+        sns.set_style("darkgrid")
+        plt.figure(figsize=(12, 6))
+        ax = sns.barplot(data=df_melted, x='Metric', y='Score', hue='System', palette='viridis')
+        plt.title('FreshCart AI: Recommendation Systems Evaluation', fontsize=16, fontweight='bold', pad=15)
+        plt.xlabel('Evaluation Metric', fontsize=12)
+        plt.ylabel('Score (0.0 - 1.0)', fontsize=12)
+        plt.ylim(0, df_melted['Score'].max() * 1.15)
+        for p in ax.patches:
+            if p.get_height() > 0:
+                ax.annotate(f'{p.get_height():.3f}', 
+                            (p.get_x() + p.get_width() / 2., p.get_height()), 
+                            ha='center', va='bottom', 
+                            fontsize=9, color='black', xytext=(0, 5), textcoords='offset points')
+        plt.legend(title='System', bbox_to_anchor=(1.05, 1), loc='upper left')
+        plt.tight_layout()
+        plt.savefig('metrics_comparison.png', dpi=300, bbox_inches='tight')
+        print("Saved bar chart to metrics_comparison.png")
+    except Exception as e:
+        print(f"Plotting failed: {e}")
+
+if __name__ == '__main__':
+    main()

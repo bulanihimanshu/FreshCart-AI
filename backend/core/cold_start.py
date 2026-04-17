@@ -197,8 +197,8 @@ def _tier3_recommendations(
     id_to_idx = {int(k): v for k, v in vocab.items() if k.isdigit()}
     sequence = [id_to_idx.get(pid, 0) for pid in cart_items]
 
-    # Pad / truncate to a fixed-length sequence (max 50 items)
-    SEQ_LEN = 50
+    # Pad / truncate to a fixed-length sequence (max 99 items)
+    SEQ_LEN = 99
     if len(sequence) == 0:
         sequence = [0]  # at least one token
     if len(sequence) > SEQ_LEN:
