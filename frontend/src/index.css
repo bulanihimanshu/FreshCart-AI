@@ -1,17 +1,87 @@
 @import "tailwindcss";
 
-@theme {
-  --font-sans: "Inter", "sans-serif";
+:root {
+  --green-dark:   #0d3b1e;
+  --green-mid:    #1a5c32;
+  --green-bright: #2d8a50;
+  --green-light:  #e8f5ed;
+  --green-pale:   #f4faf6;
+  --amber:        #f59e0b;
+  --amber-light:  #fef3c7;
+  --text-primary:   #0d1f13;
+  --text-secondary: #4a6358;
+  --text-muted:     #8aaa97;
+  --border:         #d4e8db;
+  --shadow-sm: 0 1px 3px rgba(13,59,30,0.08);
+  --shadow-md: 0 4px 16px rgba(13,59,30,0.12);
+  --shadow-lg: 0 12px 40px rgba(13,59,30,0.16);
 }
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
 
 body {
-  font-family: var(--font-sans);
-  background-color: #F8FAFC;
-  color: #1e293b;
+  font-family: 'DM Sans', sans-serif;
+  background: var(--green-pale);
+  color: var(--text-primary);
+  font-size: 15px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
 }
+
+h1, h2, h3, h4, .font-fraunces {
+  font-family: 'Fraunces', serif;
+  line-height: 1.2;
+}
+
+/* ── scrollbar hide ── */
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+
+/* ── line-clamp ── */
+.line-clamp-1 { display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+.line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+/* ── product card animation ── */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.card-animate { animation: fadeInUp 0.35s ease backwards; }
+
+/* ── float animation for hero badges ── */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-8px); }
+}
+.float-1 { animation: float 3s ease-in-out infinite; }
+.float-2 { animation: float 3s ease-in-out infinite 1.5s; }
+
+/* ── hero radial glows ── */
+.hero-glow-1::before {
+  content: '';
+  position: absolute;
+  top: -60px; right: -60px;
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, rgba(45,138,80,0.28) 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+.hero-glow-1::after {
+  content: '';
+  position: absolute;
+  bottom: -80px; left: 30%;
+  width: 400px; height: 400px;
+  background: radial-gradient(circle, rgba(245,158,11,0.10) 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+/* ── trust strip ── */
+.trust-strip {
+  background: var(--green-dark);
+  padding: 24px 40px;
+}
+
+/* ── range input accent ── */
+input[type=range] { accent-color: var(--green-dark); }

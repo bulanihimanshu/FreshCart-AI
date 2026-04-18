@@ -15,7 +15,7 @@ export const CartProvider = ({ children }) => {
             : i
         );
       }
-      return [...prev, { ...product, quantity: 1, price: Math.floor(Math.random() * 5) + 1.99 }]; // mock price
+      return [...prev, { ...product, quantity: 1, price: product.price ?? (Math.floor(Math.random() * 5) + 1.99) }];
     });
   };
 

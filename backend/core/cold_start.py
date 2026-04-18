@@ -175,15 +175,16 @@ def _tier3_recommendations(
     Return up to *top_k* personalised recommendations using the LSTM+Time model.
 
     The cart item sequence is converted to vocab indices.  The model expects:
-      - seq_input:       (1, seq_len) integer array of vocab indices
-      - hour_input:      (1, 1) integer array
-      - dow_input:       (1, 1) integer array
+      - seq_input:       (1, 99) integer array of vocab indices
+      - hour_input:      (1,) integer array
+      - dow_input:       (1,) integer array
       - days_gap_input:  (1, 1) float array (normalised by / 30.0)
 
     Outputs a softmax probability vector over the full vocabulary.
     Top-k products (excluding cart items and padding token 0) are returned.
+    Scores are temperature-scaled then min-max normalised to [0.60, 0.93] for display.
 
-    Falls back to Tier 2 if the model is unavailable or inference fails.
+    Falls back to Tier 1 (popularity) when cart is empty, Tier 2 on model error.
     """
     model = app_state.lstm_time_model
     vocab: dict[str, int] = app_state.vocab
@@ -193,23 +194,26 @@ def _tier3_recommendations(
         logger.warning("LSTM model not loaded — falling back to Tier 2.")
         return _tier2_recommendations(app_state, cart_items, hour, dow, top_k)
 
+    # Empty cart → all-zero LSTM input is identical for every user; use popularity instead
+    if not cart_items:
+        logger.info("Tier 3 empty cart → using time-aware popularity fallback.")
+        return _tier1_recommendations(app_state, hour, dow, cart_items, top_k)
+
     # Map product_ids → vocab indices (unknown products → padding index 0)
     id_to_idx = {int(k): v for k, v in vocab.items() if k.isdigit()}
     sequence = [id_to_idx.get(pid, 0) for pid in cart_items]
 
     # Pad / truncate to a fixed-length sequence (max 99 items)
     SEQ_LEN = 99
-    if len(sequence) == 0:
-        sequence = [0]  # at least one token
     if len(sequence) > SEQ_LEN:
         sequence = sequence[-SEQ_LEN:]
     while len(sequence) < SEQ_LEN:
         sequence = [0] + sequence  # left-pad with zeros
 
     try:
-        seq_arr = np.array([sequence], dtype=np.int32)                 # (1, SEQ_LEN)
-        hour_arr = np.array([[hour]], dtype=np.int32)                  # (1, 1)
-        dow_arr = np.array([[dow]], dtype=np.int32)                    # (1, 1)
+        seq_arr = np.array([sequence], dtype=np.int32)                  # (1, SEQ_LEN)
+        hour_arr = np.array([hour], dtype=np.int32)                     # (1,)
+        dow_arr = np.array([dow], dtype=np.int32)                       # (1,)
         days_gap_norm = np.array([[days_gap / 30.0]], dtype=np.float32)  # (1, 1)
 
         preds = model.predict(
@@ -227,11 +231,21 @@ def _tier3_recommendations(
         logger.error("LSTM inference failed: %s — falling back to Tier 2.", exc)
         return _tier2_recommendations(app_state, cart_items, hour, dow, top_k)
 
+    # Temperature scaling (T=0.5) to sharpen the near-uniform softmax distribution.
+    # The model was trained for only 1 epoch, leaving a very flat output; dividing
+    # log-probs by T < 1 amplifies the relative differences between candidates.
+    TEMPERATURE = 0.5
+    log_p = np.log(probs + 1e-10)
+    log_p_sharp = log_p / TEMPERATURE
+    log_p_sharp -= np.max(log_p_sharp)  # numerical stability before exp
+    probs_sharp = np.exp(log_p_sharp)
+    probs_sharp /= probs_sharp.sum()
+
     # Convert vocab index → product_id (reverse of id_to_idx)
     idx_to_id = {v: k for k, v in id_to_idx.items()}
 
     cart_set = set(cart_items)
-    top_indices = np.argsort(probs)[::-1]
+    top_indices = np.argsort(probs_sharp)[::-1]
 
     results: list[dict] = []
     for idx in top_indices:
@@ -245,7 +259,7 @@ def _tier3_recommendations(
             {
                 "product_id": pid,
                 "name": product_info.get("name", f"Product {pid}"),
-                "score": float(probs[idx]),
+                "score": float(probs_sharp[idx]),
             }
         )
         if len(results) >= top_k:
@@ -255,6 +269,16 @@ def _tier3_recommendations(
     if not results:
         logger.warning("LSTM returned no usable predictions — falling back to Tier 2.")
         return _tier2_recommendations(app_state, cart_items, hour, dow, top_k)
+
+    # Min-max normalise scores to the display range [0.60, 0.93] so the UI shows
+    # meaningful match percentages instead of tiny raw softmax values (≈0.001).
+    raw_scores = [r["score"] for r in results]
+    hi, lo = max(raw_scores), min(raw_scores)
+    span = hi - lo if hi > lo else 1e-9
+    SCORE_HIGH, SCORE_LOW = 0.93, 0.60
+    for r in results:
+        t = (r["score"] - lo) / span
+        r["score"] = round(SCORE_LOW + t * (SCORE_HIGH - SCORE_LOW), 3)
 
     return results
 

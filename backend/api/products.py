@@ -3,8 +3,8 @@ FreshCart AI — /api/products endpoints
 
 GET /api/products?query=<str>&limit=<int>
   Returns products whose names contain *query* (case-insensitive).
-  Results are filtered to only items present in the model vocabulary (D-01)
-  to prevent out-of-vocabulary product IDs from reaching the LSTM.
+  When query is empty, returns popular in-vocabulary products up to limit.
+  Results are filtered to only items present in the model vocabulary (D-01).
 
 GET /api/products/{id}
   Returns full details for a single product, or 404 if not found.
@@ -22,12 +22,9 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api", tags=["products"])
 
 
-# ---------------------------------------------------------------------------
-# Response schemas
-# ---------------------------------------------------------------------------
-
 class ProductItem(BaseModel):
     product_id: int
+    product_name: str
     name: str
     aisle: str
     department: str
@@ -35,40 +32,36 @@ class ProductItem(BaseModel):
     department_id: int
 
 
-# ---------------------------------------------------------------------------
-# Endpoints
-# ---------------------------------------------------------------------------
-
 @router.get("/products", response_model=list[ProductItem])
 async def search_products(
     request: Request,
-    query: str = Query(..., min_length=1, description="Substring to search in product names"),
-    limit: int = Query(10, ge=1, le=100, description="Maximum number of results to return"),
+    query: str = Query(default='', description="Substring to search in product names (empty = return popular items)"),
+    limit: int = Query(20, ge=1, le=100, description="Maximum number of results to return"),
 ):
     """
     Search for products by name substring.
 
+    When query is empty, returns the first `limit` in-vocabulary products.
     Only products present in the model vocabulary (``app.state.vocab``) are
-    returned (D-01). This guarantees every returned ``product_id`` can be
-    safely passed to the LSTM without triggering an out-of-vocabulary error.
+    returned (D-01).
     """
     products_df: dict = getattr(request.app.state, "products_df", {})
     vocab: dict = getattr(request.app.state, "vocab", {})
 
-    query_lower = query.lower()
+    query_lower = query.lower().strip()
     results: list[ProductItem] = []
 
     for product_id, details in products_df.items():
-        # Vocabulary check — vocab keys are string product_ids (D-01)
         if str(product_id) not in vocab:
             continue
 
-        if query_lower not in details["name"].lower():
+        if query_lower and query_lower not in details["name"].lower():
             continue
 
         results.append(
             ProductItem(
                 product_id=product_id,
+                product_name=details["name"],
                 name=details["name"],
                 aisle=details.get("aisle", ""),
                 department=details.get("department", ""),
@@ -92,11 +85,7 @@ async def search_products(
 
 @router.get("/products/{id}", response_model=ProductItem)
 async def get_product(id: int, request: Request):
-    """
-    Return full details for a single product by its numeric ID.
-
-    Returns HTTP 404 if the product ID is not found in the products lookup.
-    """
+    """Return full details for a single product by its numeric ID."""
     products_df: dict = getattr(request.app.state, "products_df", {})
 
     details = products_df.get(id)
@@ -105,6 +94,7 @@ async def get_product(id: int, request: Request):
 
     return ProductItem(
         product_id=id,
+        product_name=details["name"],
         name=details["name"],
         aisle=details.get("aisle", ""),
         department=details.get("department", ""),

@@ -1,40 +1,52 @@
 import React from 'react';
 import { useCart } from '../context/CartContext';
-import { ShoppingBasket, Plus } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { getFoodEmoji, getMockPrice } from '../utils/productUtils';
 
 const SuggestionCard = ({ product }) => {
-  const { addItem } = useCart();
+  const { cartItems, addItem } = useCart();
+  const inCart = cartItems.some(i => i.product_id === product.product_id);
+  const emoji = getFoodEmoji(product.product_name);
+  const price = getMockPrice(product.product_id);
 
-  const handleAddToCart = () => {
-    addItem({ ...product, price: 3.99 });
-    toast.success(`${product.product_name} added to cart`);
+  const handleAdd = () => {
+    if (inCart) return;
+    addItem({ ...product, price: parseFloat(price) });
+    toast.success(`${product.product_name} added!`);
   };
 
   return (
-    <div className="bg-white rounded-lg border border-emerald-100 p-3 flex gap-3 shadow-sm hover:border-emerald-300 transition-colors">
-      <div className="w-12 h-12 flex-shrink-0 bg-emerald-50 rounded text-emerald-500 flex items-center justify-center">
-        <ShoppingBasket size={20} />
+    <div style={{ background: 'white', border: '1px solid var(--border)', borderRadius: '12px', boxShadow: 'var(--shadow-sm)' }}
+      className="flex items-center gap-3 p-3 transition-all"
+      onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--green-bright)'; e.currentTarget.style.boxShadow = 'var(--shadow-md)'; }}
+      onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.boxShadow = 'var(--shadow-sm)'; }}>
+
+      <div style={{ background: 'var(--green-light)', borderRadius: '10px' }}
+        className="w-11 h-11 shrink-0 flex items-center justify-center text-2xl">
+        {emoji}
       </div>
-      <div className="flex-1 flex flex-col justify-center">
-        <h4 className="text-sm font-medium text-slate-800 line-clamp-2 leading-tight">
+
+      <div className="flex-1 min-w-0">
+        <p className="font-fraunces font-semibold line-clamp-1 leading-tight" style={{ color: 'var(--text-primary)', fontSize: '14px' }}>
           {product.product_name}
-        </h4>
-        {product.score && (
-          <span className="text-[10px] uppercase font-bold text-emerald-500 mt-1">
-            {(product.score * 100).toFixed(0)}% Match
-          </span>
-        )}
+        </p>
+        <div className="flex items-center gap-2 mt-0.5">
+          <span style={{ color: 'var(--green-mid)', fontWeight: 600, fontSize: '13px', fontFamily: "'Fraunces', serif" }}>₹{price}</span>
+          {product.score != null && (
+            <span style={{ color: 'var(--green-bright)', fontSize: '10px', fontWeight: 600 }}>
+              {Math.round(product.score * 100)}% match
+            </span>
+          )}
+        </div>
       </div>
-      <div className="flex items-center">
-        <button 
-          onClick={handleAddToCart}
-          className="w-8 h-8 flex items-center justify-center rounded-md bg-slate-50 border border-slate-200 text-slate-600 hover:text-white hover:bg-emerald-500 hover:border-emerald-500 transition-colors"
-          title="Add to cart"
-        >
-          <Plus size={16} />
-        </button>
-      </div>
+
+      <button onClick={handleAdd} disabled={inCart}
+        style={inCart
+          ? { background: 'var(--green-light)', color: 'var(--green-mid)', borderRadius: '50%', width: '32px', height: '32px' }
+          : { background: 'var(--green-dark)', color: 'white', borderRadius: '50%', width: '32px', height: '32px' }}
+        className="shrink-0 flex items-center justify-center text-lg font-bold transition-all hover:opacity-80 active:scale-95">
+        {inCart ? '✓' : '+'}
+      </button>
     </div>
   );
 };
